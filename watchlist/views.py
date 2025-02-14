@@ -67,14 +67,11 @@ class WatchlistPriceChanges(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Get the watchlist of the user
         watchlist = Watchlist.objects.filter(user=request.user)
         symbols = [item.symbol for item in watchlist]
 
-        # Call the fetch_stock_prices function to get the price data
         price_data = asyncio.run(fetch_stock_prices(symbols))
 
-        # Return the price data in the API response
         return Response({
             'user_id': request.user.id,
             'watchlist': [
