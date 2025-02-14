@@ -1,0 +1,10 @@
+# Ignore environment variables and virtual environment
+.env
+venv/
+*.pyc
+
+# Ignore Django migration files
+*/migrations/*.py
+
+# Ignore database files
+*.db
