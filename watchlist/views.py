@@ -29,7 +29,7 @@ class WatchlistAdd(APIView):
             return Response({'error': 'Symbol is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         Watchlist.objects.create(user=request.user, symbol=symbol)
-        cache.delete(f'watchlist_{request.user.id}')  # Invalidate cache
+        cache.delete(f'watchlist_{request.user.id}') 
         return Response({'message': 'Stock added to watchlist'}, status=status.HTTP_201_CREATED)
 
 class WatchlistRetrieve(APIView):
@@ -60,24 +60,21 @@ class WatchlistRemove(APIView):
             return Response({'error': 'Symbol not found in your watchlist'}, status=status.HTTP_404_NOT_FOUND)
 
         watchlist_item.delete()
-        cache.delete(f'watchlist_{request.user.id}')  # Invalidate cache
+        cache.delete(f'watchlist_{request.user.id}') 
         return Response({'message': 'Stock removed from watchlist'}, status=status.HTTP_204_NO_CONTENT)
 
 class WatchlistPriceChanges(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Get the watchlist of the user
         watchlist = Watchlist.objects.filter(user=request.user)
         symbols = [item.symbol for item in watchlist]
 
-        cache_key = f'prices_{request.user.id}'
-        price_data = cache.get(cache_key)
+        # Call the fetch_stock_prices function to get the price data
+        price_data = asyncio.run(fetch_stock_prices(symbols))
 
-        if not price_data:
-            loop = asyncio.get_event_loop()
-            price_data = loop.run_until_complete(fetch_stock_prices(symbols))
-            cache.set(cache_key, price_data, timeout=300)
-
+        # Return the price data in the API response
         return Response({
             'user_id': request.user.id,
             'watchlist': [
@@ -91,3 +88,4 @@ class WatchlistPriceChanges(APIView):
                 for i in range(len(symbols))
             ]
         })
+
